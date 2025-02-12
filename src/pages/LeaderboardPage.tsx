@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
 import { Trophy, Share2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { LeaderboardEntry } from '../types';
@@ -127,3 +129,5 @@ export const LeaderboardPage: React.FC<LeaderboardPageProps> = ({
     </div>
   );
 };
+
+export default LeaderboardPage;

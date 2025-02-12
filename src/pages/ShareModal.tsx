@@ -26,6 +26,8 @@ interface ShareData {
   files?: File[];
 }
 
+const isBrowser = typeof window !== 'undefined';
+
 export const ShareModal: React.FC<ShareModalProps> = ({
   isOpen,
   onClose,
@@ -39,12 +41,14 @@ export const ShareModal: React.FC<ShareModalProps> = ({
   const [shareError, setShareError] = useState<string>('');
 
   useEffect(() => {
+    if (!isBrowser) return;
     if (isOpen && playerRank && totalParticipants) {
       generateShareImage();
     }
   }, [isOpen, playerRank, totalParticipants]);
 
   const generateShareImage = async () => {
+    if (!isBrowser) return;
     setIsGeneratingImage(true);
     try {
       const canvas = document.createElement('canvas');
@@ -103,9 +107,10 @@ export const ShareModal: React.FC<ShareModalProps> = ({
   const shareText = playerRank 
     ? `${randomQuote} I ranked #${playerRank} out of ${totalParticipants} participants in the Carbon Footprint Challenge!` 
     : randomQuote;
-  const shareUrl = window.location.href;
+  const shareUrl = isBrowser ? window.location.href : '';
 
   const handleShare = async (platform: SharePlatform) => {
+    if (!isBrowser) return;
     try {
       if (navigator.share && platform !== 'linkedin') {
         const shareData: ShareData = {
@@ -140,6 +145,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
   };
 
   const copyToClipboard = async () => {
+    if (!isBrowser) return;
     try {
       await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
       setCopySuccess(true);
@@ -151,7 +157,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
   };
 
   const downloadImage = async () => {
-    if (!shareImageUrl) return;
+    if (!isBrowser || !shareImageUrl) return;
     
     const link = document.createElement('a');
     link.href = shareImageUrl;
@@ -260,3 +266,5 @@ export const ShareModal: React.FC<ShareModalProps> = ({
     </div>
   );
 };
+
+export default ShareModal;

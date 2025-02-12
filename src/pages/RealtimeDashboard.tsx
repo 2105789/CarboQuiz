@@ -287,3 +287,5 @@ export const RealtimeDashboard: React.FC = () => {
     </div>
   );
 };
+
+export default RealtimeDashboard;
