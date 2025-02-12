@@ -41,3 +41,16 @@ export interface LeaderboardEntry {
   bestChoice: string;
   date: string;
 }
+
+export interface RankEntry {
+  id?: string;  // Optional since it's added after creation
+  questionId: number;
+  playerName: string;
+  questionText: string;
+  selectedOption: Option;
+  timestamp: number;
+}
+
+export interface RealtimeRankData {
+  [key: string]: RankEntry;
+}

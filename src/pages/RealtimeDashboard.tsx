@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useEffect, useState, useCallback } from 'react';
 import { Trophy, Clock, Users, Globe2, Leaf } from 'lucide-react';
 import { ImpactAnimation } from '../components/ImpactAnimation';
@@ -119,7 +121,7 @@ export const RealtimeDashboard: React.FC = () => {
   const processQueue = useCallback(() => {
     const now = Date.now();
     const { toDisplay, toKeep } = queuedRanks.reduce(
-      (acc, entry) => {
+      (acc: { toDisplay: Record<string, QueuedRankEntry>; toKeep: QueuedRankEntry[] }, entry) => {
         if (entry.expiryTime <= now) {
           acc.toDisplay[entry.id] = entry;
         } else {
@@ -127,11 +129,11 @@ export const RealtimeDashboard: React.FC = () => {
         }
         return acc;
       },
-      { toDisplay: {} as Record<string, QueuedRankEntry>, toKeep: [] as QueuedRankEntry[] }
+      { toDisplay: {}, toKeep: [] }
     );
 
     if (Object.keys(toDisplay).length > 0) {
-      setRankData(prev => ({ ...prev, ...toDisplay }));
+      setRankData((prev: RealtimeRankData) => ({ ...prev, ...toDisplay }));
       setQueuedRanks(toKeep);
     }
   }, [queuedRanks]);

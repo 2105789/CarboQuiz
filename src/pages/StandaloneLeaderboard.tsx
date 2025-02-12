@@ -1,5 +1,7 @@
+'use client';
+
 import React from 'react';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 import { Leaderboard } from '../components/Leaderboard';
 import { Play, Leaf } from 'lucide-react';
 
@@ -21,7 +23,7 @@ const StandaloneLeaderboard: React.FC = () => {
               Join the global community in reducing carbon emissions
             </p>
             <Link 
-              to="/"
+              href="/"
               className="inline-flex items-center px-8 py-4 bg-green-500 text-white rounded-xl
                         font-semibold shadow-lg hover:bg-green-600 transform hover:scale-105
                         transition-all duration-200 focus:outline-none focus:ring-2 
@@ -36,8 +38,6 @@ const StandaloneLeaderboard: React.FC = () => {
 
       {/* Stats Section */}
       <div className="max-w-4xl mx-auto px-4 py-8">
-
-
         {/* Leaderboard Section */}
         <div className="animate-fadeIn">
           <Leaderboard standalone />
@@ -51,19 +51,19 @@ const StandaloneLeaderboard: React.FC = () => {
             <p className="mb-2">Join us in making a difference</p>
             <div className="flex justify-center space-x-4">
               <Link 
-                to="/about"
+                href="/about"
                 className="hover:text-green-600 transition-colors"
               >
                 About
               </Link>
               <Link 
-                to="/faq"
+                href="/faq"
                 className="hover:text-green-600 transition-colors"
               >
                 FAQ
               </Link>
               <Link 
-                to="/contact"
+                href="/contact"
                 className="hover:text-green-600 transition-colors"
               >
                 Contact
