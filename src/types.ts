@@ -40,6 +40,12 @@ export interface LeaderboardEntry {
   totalCarbon: number;
   bestChoice: string;
   date: string;
+  timestamp?: number;  // Optional since it's added after creation
+}
+
+export interface LatestLeaderboardEntry {
+  entry: LeaderboardEntry;
+  rank: number;
 }
 
 export interface RankEntry {
