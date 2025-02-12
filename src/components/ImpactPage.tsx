@@ -41,8 +41,8 @@ export const ImpactPage: React.FC<ImpactPageProps> = ({ options = [], onNext }) 
   }, [options]);
 
   // Get GIF based on average rank
-  const selectedGif = getRandomGifForRank(averageRank);
-  const preloadedGif = getPreloadedGif(selectedGif);
+  const selectedGif = useMemo(() => getRandomGifForRank(averageRank), [averageRank]);
+  const [isGifLoaded, setIsGifLoaded] = React.useState(false);
 
   const handleNext = () => {
     window.scrollTo(0, 0);
@@ -65,7 +65,8 @@ export const ImpactPage: React.FC<ImpactPageProps> = ({ options = [], onNext }) 
                   src={selectedGif}
                   alt={`Rank ${averageRank} reaction`}
                   className="rounded-lg max-h-96 w-fit object-cover animate-fadeIn"
-                  style={{ display: preloadedGif ? 'block' : 'none' }}
+                  onLoad={() => setIsGifLoaded(true)}
+                  style={{ opacity: isGifLoaded ? 1 : 0 }}
                 />
               </div>
             </div>
