@@ -44,6 +44,11 @@ export const QuestionPage: React.FC<QuestionPageProps> = ({
         }
         return newOptions;
       } else {
+        // Limit to maximum 2 selections
+        if (prev.length >= 2) {
+          return prev;
+        }
+        
         if (prev.length === 0) {
           setShowContinueButton(true);
         }
@@ -55,8 +60,12 @@ export const QuestionPage: React.FC<QuestionPageProps> = ({
   const handleNext = useCallback(() => {
     if (selectedOptions.length === 0) return;
     
-    // Show distance popup for commute question (id: 1)
-    if (question.id === 1) {
+    // Show distance popup only for travel/commute related questions
+    const isTravelQuestion = question.text.toLowerCase().includes('transport') || 
+                           question.text.toLowerCase().includes('commut') ||
+                           question.text.toLowerCase().includes('travel');
+    
+    if (isTravelQuestion) {
       setShowDistancePopup(true);
       return;
     }
@@ -65,7 +74,7 @@ export const QuestionPage: React.FC<QuestionPageProps> = ({
     setTimeout(() => {
       onAnswer(selectedOptions);
     }, 1000);
-  }, [onAnswer, selectedOptions, question.id]);
+  }, [onAnswer, selectedOptions, question.text]);
 
   const handleDistanceSubmit = useCallback((distance: number) => {
     setShowDistancePopup(false);
@@ -172,9 +181,9 @@ export const QuestionPage: React.FC<QuestionPageProps> = ({
 
         <div className="w-full mx-auto px-4 py-6">
           <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2 text-center">{question.text}</h2>
-          <p className="text-sm text-gray-600 text-center font-medium mb-3">Choose one or more options that apply to your situation</p>
+          <p className="text-sm text-gray-600 text-center font-medium mb-3">Choose up to 2 options that apply to your situation</p>
           <div className="flex justify-center">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-16 w-full max-w-5xl">
+            <div className="grid grid-rows-2 grid-cols-3 gap-3 md:gap-4 mb-16 w-full max-w-5xl">
               {question.options.map((option) => {
                 const isSelected = selectedOptions.some(o => o.id === option.id);
                 return (

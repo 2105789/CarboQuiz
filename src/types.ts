@@ -1,8 +1,6 @@
 export interface Option {
   id: number;
   text: string;
-  icon: string;
-  image: string;
   carbonFootprint: number;
   treeEquivalent: number;
   rank: number;
