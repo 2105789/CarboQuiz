@@ -34,7 +34,7 @@ const GameFlow: React.FC = () => {
       case 'welcome':
         return <WelcomePage onStart={(name: string, email: string) => {
           setUserInfo({ name, email });
-          handleStart(name);
+          handleStart(name, email); // Pass email to handleStart
         }} />;
       case 'question':
         return (
@@ -55,8 +55,6 @@ const GameFlow: React.FC = () => {
             answers={answers} 
             onRestart={handleRestart}
             onViewLeaderboard={handleViewLeaderboard}
-            userName={userInfo.name}
-            userEmail={userInfo.email}
           />
         );
       case 'leaderboard':

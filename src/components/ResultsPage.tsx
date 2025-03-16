@@ -9,24 +9,23 @@ import { ImpactAnimation } from './ImpactAnimation';
 import { getRandomGifForRank } from '../data/gifs';
 import { getPreloadedGif } from '../utils/preloader';
 import { sendCarbonReport } from '../services/emailService';
+import { useGameState } from '../contexts/GameContext';
 
 interface ResultsPageProps {
   answers: Answer[];
   onRestart: () => void;
   onViewLeaderboard: () => void;
-  userName: string;
-  userEmail: string;
 }
 
 export const ResultsPage: React.FC<ResultsPageProps> = ({
   answers,
   onRestart,
   onViewLeaderboard,
-  userName,
-  userEmail
 }) => {
+  const { playerName, playerEmail } = useGameState(); // Get user info from GameContext
   const [isEmailSent, setIsEmailSent] = useState(false);
   const [isReferencesExpanded, setIsReferencesExpanded] = useState(false);
+  const [activeTab, setActiveTab] = useState<'summary' | 'breakdown'>('summary');
 
   // Add emailSentRef at the top of the component
   const emailSentRef = useRef(false);
@@ -128,17 +127,15 @@ export const ResultsPage: React.FC<ResultsPageProps> = ({
     };
   });
 
-  console.log('ResultsPage - Enriched Answers:', enrichedAnswers);
-
   useEffect(() => {
     // Validate required fields before sending
-    if (!userEmail || !userName) {
-      console.error('Missing required fields:', { userEmail, userName });
+    if (!playerEmail || !playerName) {
+      console.error('Missing required fields:', { playerEmail, playerName });
       return;
     }
 
     // Create a unique key for this quiz result
-    const emailKey = `quiz_${userEmail}_${totalCarbon}`;
+    const emailKey = `quiz_${playerEmail}_${totalCarbon}`;
     
     // Check if this exact quiz result has already been emailed
     if (localStorage.getItem(emailKey)) {
@@ -151,8 +148,8 @@ export const ResultsPage: React.FC<ResultsPageProps> = ({
 
     // Send the email with validated parameters
     sendCarbonReport(
-      userEmail.trim(),
-      userName.trim(),
+      playerEmail.trim(),
+      playerName.trim(),
       totalCarbon,
       totalTrees,
       enrichedAnswers
@@ -170,7 +167,7 @@ export const ResultsPage: React.FC<ResultsPageProps> = ({
       // If email errors, remove the flag so it can be tried again
       localStorage.removeItem(emailKey);
     });
-  }, [userEmail, userName, totalCarbon, totalTrees, enrichedAnswers]); // Add dependencies
+  }, [playerEmail, playerName, totalCarbon, totalTrees, enrichedAnswers]); // Update dependencies
 
   // Function to handle social sharing
   const handleShare = (platform: 'linkedin' | 'facebook' | 'twitter' | 'copy') => {
@@ -215,16 +212,23 @@ export const ResultsPage: React.FC<ResultsPageProps> = ({
   };
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-b from-green-50 to-green-100">
-      <main className="px-4 py-6 md:py-12 pb-24" role="main" aria-labelledby="results-title">
+    <div className="relative min-h-screen bg-gradient-to-br from-emerald-50 via-cyan-50 to-emerald-50">
+      {/* Subtle background decorations - consistent with other pages */}
+      <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-10 -left-10 w-32 h-32 sm:w-72 sm:h-72 bg-emerald-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-pulse" />
+        <div className="absolute -top-10 -right-10 w-32 h-32 sm:w-72 sm:h-72 bg-cyan-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-pulse delay-700" />
+        <div className="absolute -bottom-10 left-1/2 w-32 h-32 sm:w-72 sm:h-72 bg-teal-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-pulse delay-1000" />
+      </div>
+
+      <main className="relative z-10 px-4 sm:px-6 py-6 md:py-8 pb-24" role="main" aria-labelledby="results-title" style={{ paddingBottom: 'env(safe-area-inset-bottom, 6rem)' }}>
         <div className="max-w-4xl mx-auto">
-          <div id="results-container" className="bg-white rounded-2xl shadow-xl p-4 md:p-8 animate-fadeIn md:mb-16">
+          <div id="results-container" className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg p-4 sm:p-6 md:p-8 animate-fadeIn mb-8 md:mb-12">
             <section className="text-center mb-8" aria-labelledby="summary-title">
               {/* Header Icon with Gradient Background */}
-              <div className="relative mb-8">
-                <div className="absolute inset-0 bg-gradient-to-br from-green-300 to-green-100 rounded-full w-20 h-20 md:w-24 md:h-24 mx-auto opacity-70 blur-lg"></div>
+              <div className="relative mb-6 md:mb-8">
+                <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 to-emerald-200 rounded-full w-20 h-20 md:w-24 md:h-24 mx-auto opacity-70 blur-lg"></div>
                 <Leaf
-                  className="w-16 h-16 md:w-20 md:h-20 text-green-600 mx-auto relative transform hover:scale-110 transition-transform"
+                  className="w-16 h-16 md:w-20 md:h-20 text-emerald-600 mx-auto relative transform hover:scale-110 transition-transform"
                   aria-hidden="true"
                 />
               </div>
@@ -232,346 +236,461 @@ export const ResultsPage: React.FC<ResultsPageProps> = ({
               {/* Title with Gradient Text */}
               <h1 
                 id="results-title" 
-                className="text-2xl md:text-4xl font-bold mb-8 text-gray-800"
+                className="text-2xl sm:text-3xl md:text-4xl font-bold mb-6 md:mb-8 bg-gradient-to-r from-emerald-600 to-emerald-400 bg-clip-text text-transparent"
+                aria-label="Your Carbon Footprint Results"
               >
                 Your Carbon Footprint Results
               </h1>
 
-              {/* Summary Stats with Enhanced Design */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto mb-12">
-                <div className="relative overflow-hidden bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 group">
+              {/* Summary Stats with Enhanced Design - UPDATED for mobile 2-column, 3-row grid */}
+              <div className="grid grid-cols-2 grid-rows-3 sm:grid-cols-2 sm:grid-rows-2 gap-2 sm:gap-4 max-w-2xl mx-auto mb-6 md:mb-8">
+                <div className="relative overflow-hidden bg-gradient-to-br from-emerald-500/90 to-emerald-600/90 backdrop-blur-sm rounded-xl p-5 md:p-6 shadow-md hover:shadow-xl transition-all transform hover:-translate-y-1 group text-white">
+                  <div className="absolute -right-6 -bottom-6 w-16 h-16 rounded-full bg-white/10 z-0"></div>
+                  <div className="absolute -left-2 -top-2 w-8 h-8 rounded-full bg-white/20 z-0"></div>
                   <div className="relative z-10">
-                    <p className="text-2xl md:text-3xl font-bold text-green-600 mb-2">
-                      {totalCarbon.toLocaleString()} kg CO₂
+                    <p className="text-xs uppercase tracking-wider font-bold text-emerald-100 mb-1">Your Footprint</p>
+                    <p className="text-2xl md:text-3xl font-bold text-white mb-0">
+                      {totalCarbon.toLocaleString()} kg
                     </p>
-                    <p className="text-sm md:text-base text-gray-600">annual carbon footprint</p>
+                    <p className="text-xs text-emerald-100">annual CO₂</p>
                   </div>
                 </div>
 
-                <div className="relative overflow-hidden bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 group">
+                <div className="relative overflow-hidden bg-gradient-to-br from-cyan-500/90 to-cyan-600/90 backdrop-blur-sm rounded-xl p-5 md:p-6 shadow-md hover:shadow-xl transition-all transform hover:-translate-y-1 group text-white">
+                  <div className="absolute -right-6 -bottom-6 w-16 h-16 rounded-full bg-white/10 z-0"></div>
+                  <div className="absolute -left-2 -top-2 w-8 h-8 rounded-full bg-white/20 z-0"></div>
                   <div className="relative z-10">
-                    <p className="text-2xl md:text-3xl font-bold text-green-600 mb-2">
-                      {totalTrees.toLocaleString()} trees
+                    <p className="text-xs uppercase tracking-wider font-bold text-cyan-100 mb-1">Trees Needed</p>
+                    <p className="text-2xl md:text-3xl font-bold text-white mb-0">
+                      {totalTrees.toLocaleString()}
                     </p>
-                    <p className="text-sm md:text-base text-gray-600">needed for carbon absorption</p>
+                    <p className="text-xs text-cyan-100">for carbon absorption</p>
                   </div>
+                </div>
+
+                <div className="relative overflow-hidden bg-gradient-to-br from-amber-500/90 to-amber-600/90 backdrop-blur-sm rounded-xl p-5 md:p-6 shadow-md hover:shadow-xl transition-all transform hover:-translate-y-1 group text-white">
+                  <div className="absolute -right-6 -bottom-6 w-16 h-16 rounded-full bg-white/10 z-0"></div>
+                  <div className="absolute -left-2 -top-2 w-8 h-8 rounded-full bg-white/20 z-0"></div>
+                  <div className="relative z-10">
+                    <p className="text-xs uppercase tracking-wider font-bold text-amber-100 mb-1">Avg. Impact</p>
+                    <p className="text-2xl md:text-3xl font-bold text-white mb-0">
+                      {averageCarbonPerYear.toLocaleString()} kg
+                    </p>
+                    <p className="text-xs text-amber-100">annual CO₂ average</p>
+                  </div>
+                </div>
+
+                <div className="relative overflow-hidden bg-gradient-to-br from-green-500/90 to-green-600/90 backdrop-blur-sm rounded-xl p-5 md:p-6 shadow-md hover:shadow-xl transition-all transform hover:-translate-y-1 group text-white">
+                  <div className="absolute -right-6 -bottom-6 w-16 h-16 rounded-full bg-white/10 z-0"></div>
+                  <div className="absolute -left-2 -top-2 w-8 h-8 rounded-full bg-white/20 z-0"></div>
+                  <div className="relative z-10">
+                    <p className="text-xs uppercase tracking-wider font-bold text-green-100 mb-1">Ideal Target</p>
+                    <p className="text-2xl md:text-3xl font-bold text-white mb-0">
+                      {idealCarbonPerYear.toLocaleString()} kg
+                    </p>
+                    <p className="text-xs text-green-100">annual CO₂ goal</p>
+                  </div>
+                </div>
+
+                <div className="col-span-2 bg-gradient-to-r from-indigo-500/90 to-purple-600/90 relative overflow-hidden backdrop-blur-sm rounded-xl p-5 md:p-6 shadow-md hover:shadow-xl transition-all transform hover:-translate-y-1 group text-white">
+                  <div className="absolute -right-6 -bottom-6 w-16 h-16 rounded-full bg-white/10 z-0"></div>
+                  <div className="absolute -left-2 -top-2 w-8 h-8 rounded-full bg-white/20 z-0"></div>
+                  <button
+                    onClick={onViewLeaderboard}
+                    className="relative z-10 w-full text-left flex justify-between items-center"
+                    aria-label="View global leaderboard"
+                  >
+                    <div>
+                      <p className="text-xs uppercase tracking-wider font-bold text-purple-100 mb-1">Global Ranking</p>
+                      <p className="text-base sm:text-lg font-bold text-white mb-0">
+                        View Leaderboard
+                      </p>
+                    </div>
+                    <Trophy className="h-8 w-8 text-white/70 group-hover:text-white group-hover:rotate-12 transition-all duration-300" />
+                  </button>
                 </div>
               </div>
 
-              {/* Action Buttons Container */}
-              <div className="flex flex-col gap-4 max-w-2xl mx-auto mb-12">
-                {/* Social Share Buttons */}
-                <div className="bg-white rounded-xl shadow-lg p-6 mb-4" id="social-share-section">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">
-                    Share Your Results
-                  </h3>
-                  
-                  <div className="flex flex-wrap justify-center gap-3 md:gap-4">
-                    <button
-                      onClick={() => handleShare('linkedin')}
-                      className="group relative inline-flex items-center justify-center px-4 md:px-6 py-3 rounded-xl
-                               bg-blue-600 text-white text-sm md:text-base font-semibold 
-                               shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-600 
-                               focus:ring-offset-2
-                               transition-all duration-200 transform hover:scale-[1.05]"
-                      aria-label="Share on LinkedIn"
-                    >
-                      <div className="relative z-10 flex items-center">
-                        <Linkedin className="w-4 h-4 md:w-5 md:h-5 mr-2 group-hover:scale-110 transition-transform" />
-                        LinkedIn
-                      </div>
-                    </button>
-                    <button
-                      onClick={() => handleShare('facebook')}
-                      className="group relative inline-flex items-center justify-center px-4 md:px-6 py-3 rounded-xl
-                               bg-blue-700 text-white text-sm md:text-base font-semibold 
-                               shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-700 
-                               focus:ring-offset-2
-                               transition-all duration-200 transform hover:scale-[1.05]"
-                      aria-label="Share on Facebook"
-                    >
-                      <div className="relative z-10 flex items-center">
-                        <Facebook className="w-4 h-4 md:w-5 md:h-5 mr-2 group-hover:scale-110 transition-transform" />
-                        Facebook
-                      </div>
-                    </button>
-                    <button
-                      onClick={() => handleShare('twitter')}
-                      className="group relative inline-flex items-center justify-center px-4 md:px-6 py-3 rounded-xl
-                               bg-sky-500 text-white text-sm md:text-base font-semibold 
-                               shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-sky-500 
-                               focus:ring-offset-2
-                               transition-all duration-200 transform hover:scale-[1.05]"
-                      aria-label="Share on Twitter"
-                    >
-                      <div className="relative z-10 flex items-center">
-                        <Twitter className="w-4 h-4 md:w-5 md:h-5 mr-2 group-hover:scale-110 transition-transform" />
-                        Twitter
-                      </div>
-                    </button>
-                    <button
-                      onClick={() => handleShare('copy')}
-                      className="group relative inline-flex items-center justify-center px-4 md:px-6 py-3 rounded-xl
-                               bg-gray-700 text-white text-sm md:text-base font-semibold 
-                               shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-gray-700 
-                               focus:ring-offset-2
-                               transition-all duration-200 transform hover:scale-[1.05]"
-                      aria-label="Copy text to clipboard"
-                    >
-                      <div className="relative z-10 flex items-center">
-                        <Share2 className="w-4 h-4 md:w-5 md:h-5 mr-2 group-hover:scale-110 transition-transform" />
-                        Copy Text
-                      </div>
-                    </button>
-                  </div>
-                  
-                  <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                    <p className="text-sm text-gray-600 mb-2">
-                      <strong>Your shareable result:</strong>
-                    </p>
-                    <p className="text-sm text-gray-700 font-medium p-2 bg-white rounded border border-gray-200">
-                      I just completed the CarboQuiz! My annual carbon footprint is {totalCarbon.toLocaleString()} kg CO₂, which would require {totalTrees.toLocaleString()} trees to absorb. Check your own footprint at CarboQuiz!
-                    </p>
-                    <p className="text-xs text-gray-500 mt-2">
-                      Note: Due to platform restrictions, LinkedIn and Facebook may only show the link without the text above. 
-                      Use the "Copy Text" button to copy both the text and link for manual pasting.
-                    </p>
-                  </div>
-                </div>
-
-                {/* Download PDF Button */}
-                <BlobProvider document={
-                  <CarbonReport
-                    name={userName}
-                    email={userEmail}
-                    totalCarbon={totalCarbon}
-                    totalTrees={totalTrees}
-                    answers={enrichedAnswers}
-                  />
-                }>
-                  {({ url, loading }) => (
-                    <a 
-                      href={url || '#'}
-                      download={`carbon-report-${userName.toLowerCase().replace(/\s+/g, '-')}.pdf`}
-                      className="group relative inline-flex items-center justify-center px-8 py-4 rounded-xl
-                               bg-blue-500 text-white text-base font-semibold 
-                               shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-500 
-                               focus:ring-offset-2
-                               transition-all duration-200 transform hover:scale-[1.02] text-center"
-                    >
-                      <div className="relative z-10 flex items-center">
-                        {loading ? (
-                          <span className="flex items-center">
-                            <span className="animate-spin mr-3 h-5 w-5 border-2 border-white border-t-transparent rounded-full"/>
-                            Generating PDF...
-                          </span>
-                        ) : (
-                          <>
-                            <Download className="w-5 h-5 mr-3 group-hover:animate-bounce" />
-                            Download PDF Report
-                          </>
-                        )}
-                      </div>
-                    </a>
-                  )}
-                </BlobProvider>
-
-                {/* Footprint Calculator Link */}
-                <a
-                  href="https://footprinto.vercel.app/"
-                  target="_blank"
-                  className="group relative inline-flex items-center justify-center px-8 py-4 rounded-xl
-                           bg-teal-500 text-white text-base font-semibold 
-                           shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-teal-500 
-                           focus:ring-offset-2
-                           transition-all duration-200 transform hover:scale-[1.02]"
-                >
-                  <div className="relative z-10 flex items-center">
-                    <Camera className="w-5 h-5 mr-3 group-hover:scale-110 transition-transform" />
-                    Calculate Object Carbon Footprint
-                  </div>
-                </a>
-
-                {/* Restart Game Button */}
-                <button
-                  onClick={handleRestart}
-                  className="group relative inline-flex items-center justify-center px-8 py-4 rounded-xl
-                           bg-yellow-500 text-white text-base font-semibold 
-                           shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-yellow-500 
-                           focus:ring-offset-2
-                           transition-all duration-200 transform hover:scale-[1.02]"
-                >
-                  <div className="relative z-10 flex items-center">
-                    <Trophy className="w-5 h-5 mr-3 group-hover:rotate-12 transition-transform" />
-                    Play Again
-                  </div>
-                </button>
-              </div>
-
-              {/* Enhanced Chart Section */}
-              <div className="bg-white rounded-xl shadow-lg p-3 md:p-8 mb-8 hover:shadow-xl transition-shadow duration-300">
-                <h2 className="text-lg md:text-xl font-semibold text-gray-800 mb-4">
-                  Annual Carbon Impact
-                </h2>
-                <div className="h-[300px] md:h-[400px] w-full bg-white rounded-lg p-4">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={impactData}
-                      margin={{
-                        top: 20,
-                        right: isMobile ? 30 : 50,
-                        left: isMobile ? 0 : 10,
-                        bottom: 20,
-                      }}
-                      barGap={isMobile ? 4 : 8}
-                      barSize={isMobile ? 30 : 60}
-                    >
-                      <CartesianGrid
-                        strokeDasharray="3 3"
-                        stroke="#e5e7eb"
-                        vertical={false}
-                      />
-                      <XAxis
-                        dataKey="year"
-                        stroke="#4b5563"
-                        fontSize={isMobile ? 10 : 12}
-                        tickMargin={8}
-                        axisLine={{ stroke: '#e5e7eb' }}
-                      />
-                      <YAxis
-                        stroke="#4b5563"
-                        fontSize={isMobile ? 10 : 12}
-                        tickMargin={8}
-                        axisLine={{ stroke: '#e5e7eb' }}
-                        tickFormatter={(value) => `${(value / 1000).toFixed(0)}K`}
-                        width={isMobile ? 35 : 45}
-                      />
-                      <Tooltip
-                        content={<CustomTooltip />}
-                        wrapperStyle={{ outline: 'none' }}
-                        cursor={{ fill: 'rgba(229, 231, 235, 0.2)' }}
-                      />
-                      <Legend
-                        verticalAlign="bottom"
-                        height={36}
-                        iconType="circle"
-                        iconSize={isMobile ? 6 : 8}
-                        wrapperStyle={{
-                          fontSize: isMobile ? '10px' : '12px',
-                          paddingTop: '8px'
-                        }}
-                      />
-                      <ReferenceLine
-                        y={idealCarbonPerYear}
-                        stroke="#10b981"
-                        strokeDasharray="3 3"
-                        label={{
-                          value: 'Ideal Target',
-                          position: 'right',
-                          fill: '#10b981',
-                          fontSize: isMobile ? 10 : 12,
-                          fontWeight: 600
-                        }}
-                      />
-                      <ReferenceLine
-                        y={averageCarbonPerYear}
-                        stroke="#eab308"
-                        strokeDasharray="3 3"
-                        label={{
-                          value: 'Average Zone',
-                          position: 'right',
-                          fill: '#eab308',
-                          fontSize: isMobile ? 10 : 12,
-                          fontWeight: 600
-                        }}
-                      />
-                      <Bar
-                        dataKey="Your Impact"
-                        fill="#f43f5e"
-                        radius={[6, 6, 0, 0]}
-                      />
-                      <Bar
-                        dataKey="Average Impact"
-                        fill="#eab308"
-                        radius={[6, 6, 0, 0]}
-                      />
-                      <Bar
-                        dataKey="Ideal Target"
-                        fill="#10b981"
-                        radius={[6, 6, 0, 0]}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-                
-                <div className="mt-6 space-y-2 bg-white p-4 rounded-xl border border-gray-100">
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="flex items-center gap-2 group">
-                      <span className="w-3 h-3 rounded-full bg-red-500 group-hover:scale-110 transition-transform"/>
-                      <span className="text-gray-700 group-hover:text-red-600 transition-colors">Your Impact</span>
-                    </div>
-                    <div className="flex items-center gap-2 group">
-                      <span className="w-3 h-3 rounded-full bg-yellow-500 group-hover:scale-110 transition-transform"/>
-                      <span className="text-gray-700 group-hover:text-yellow-600 transition-colors">Average</span>
-                    </div>
-                    <div className="flex items-center gap-2 group">
-                      <span className="w-3 h-3 rounded-full bg-green-500 group-hover:scale-110 transition-transform"/>
-                      <span className="text-gray-700 group-hover:text-green-600 transition-colors">Target</span>
-                    </div>
-                  </div>
+              {/* Tab navigation for easier mobile navigation */}
+              <div className="mb-6 flex justify-center">
+                <div className="bg-gray-100 p-1 rounded-lg inline-flex">
+                  <button
+                    onClick={() => setActiveTab('summary')}
+                    className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
+                      activeTab === 'summary'
+                        ? 'bg-white text-emerald-600 shadow-sm' 
+                        : 'text-gray-600 hover:text-emerald-600'
+                    }`}
+                    aria-pressed={activeTab === 'summary'}
+                    aria-label="View summary tab"
+                  >
+                    Summary
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('breakdown')}
+                    className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
+                      activeTab === 'breakdown'
+                        ? 'bg-white text-emerald-600 shadow-sm' 
+                        : 'text-gray-600 hover:text-emerald-600'
+                    }`}
+                    aria-pressed={activeTab === 'breakdown'}
+                    aria-label="View detailed breakdown tab"
+                  >
+                    Detailed Breakdown
+                  </button>
                 </div>
               </div>
 
-              {/* Detailed Breakdown Section */}
-              <section className="space-y-4 md:space-y-6 mb-8" aria-label="Detailed breakdown">
-                <h2 className="text-lg md:text-xl font-semibold text-gray-800 mb-6">
-                  Your Choices Breakdown
-                </h2>
-                <div className="grid gap-6">
-                  {questions.map((question, questionIndex) => {
-                    const questionAnswers = groupedAnswers[question.id] || [];
-                    if (questionAnswers.length === 0) return null;
-
-                    return (
-                      <div 
-                        key={question.id}
-                        className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300"
+              {/* Main content - conditional display based on active tab */}
+              {activeTab === 'summary' && (
+                <>
+                  {/* Social Share Buttons - improved for mobile and accessibility */}
+                  <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-md p-4 sm:p-6 mb-6" id="social-share-section">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">
+                      Share Your Results
+                    </h3>
+                    
+                    <div className="flex flex-wrap justify-center gap-3">
+                      <button
+                        onClick={() => handleShare('linkedin')}
+                        className="group relative inline-flex items-center justify-center px-3 sm:px-4 py-2 sm:py-3 rounded-lg
+                                bg-[#0077B5] text-white text-xs sm:text-sm font-medium
+                                shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-600 
+                                focus:ring-offset-2
+                                transition-all duration-200 transform hover:scale-105"
+                        aria-label="Share on LinkedIn"
                       >
-                        <div className="flex items-start gap-4">
-                          <div className="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                            <span className="text-green-600 font-semibold">{questionIndex + 1}</span>
-                          </div>
-                          <div className="flex-grow">
-                            <h3 className="text-base md:text-lg font-medium text-gray-800 mb-3">
-                              {question.text}
-                            </h3>
-                            <div className="space-y-3">
-                              {questionAnswers.map((option, optionIndex) => (
-                                <div 
-                                  key={option.id}
-                                  className="bg-white p-4 rounded-lg border border-gray-100"
-                                >
-                                  <div className="flex items-center justify-between mb-2">
-                                    <span className="font-medium text-gray-700">{option.text}</span>
-                                    <span className="text-sm font-semibold text-green-600">
-                                      {option.carbonFootprint.toLocaleString()} kg CO₂
-                                    </span>
+                        <Linkedin className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-2 group-hover:scale-110 transition-transform" />
+                        <span className="hidden sm:inline">LinkedIn</span>
+                      </button>
+                      <button
+                        onClick={() => handleShare('facebook')}
+                        className="group relative inline-flex items-center justify-center px-3 sm:px-4 py-2 sm:py-3 rounded-lg
+                                bg-[#1877F2] text-white text-xs sm:text-sm font-medium
+                                shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-700 
+                                focus:ring-offset-2
+                                transition-all duration-200 transform hover:scale-105"
+                        aria-label="Share on Facebook"
+                      >
+                        <Facebook className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-2 group-hover:scale-110 transition-transform" />
+                        <span className="hidden sm:inline">Facebook</span>
+                      </button>
+                      <button
+                        onClick={() => handleShare('twitter')}
+                        className="group relative inline-flex items-center justify-center px-3 sm:px-4 py-2 sm:py-3 rounded-lg
+                                bg-[#1DA1F2] text-white text-xs sm:text-sm font-medium
+                                shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-sky-500 
+                                focus:ring-offset-2
+                                transition-all duration-200 transform hover:scale-105"
+                        aria-label="Share on Twitter"
+                      >
+                        <Twitter className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-2 group-hover:scale-110 transition-transform" />
+                        <span className="hidden sm:inline">Twitter</span>
+                      </button>
+                      <button
+                        onClick={() => handleShare('copy')}
+                        className="group relative inline-flex items-center justify-center px-3 sm:px-4 py-2 sm:py-3 rounded-lg
+                                bg-gray-700 text-white text-xs sm:text-sm font-medium
+                                shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-gray-700 
+                                focus:ring-offset-2
+                                transition-all duration-200 transform hover:scale-105"
+                        aria-label="Copy text to clipboard"
+                      >
+                        <Share2 className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-2 group-hover:scale-110 transition-transform" />
+                        <span className="hidden sm:inline">Copy Text</span>
+                      </button>
+                    </div>
+                    
+                    <div className="mt-4 p-3 bg-gray-50/80 rounded-lg border border-gray-200">
+                      <p className="text-sm text-gray-600 mb-2">
+                        <strong>Your shareable result:</strong>
+                      </p>
+                      <p className="text-sm text-gray-700 font-medium p-2 bg-white/90 rounded border border-gray-200">
+                        I just completed the CarboQuiz! My annual carbon footprint is {totalCarbon.toLocaleString()} kg CO₂, which would require {totalTrees.toLocaleString()} trees to absorb. Check your own footprint at CarboQuiz!
+                      </p>
+                      <p className="text-xs text-gray-500 mt-2">
+                        Due to platform restrictions, LinkedIn and Facebook may only show the link. Use the "Copy Text" button for sharing manually.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* PDF Download Button - improved aesthetics and accessibility */}
+                  <BlobProvider document={
+                    <CarbonReport
+                      name={playerName}
+                      email={playerEmail}
+                      totalCarbon={totalCarbon}
+                      totalTrees={totalTrees}
+                      answers={enrichedAnswers}
+                    />
+                  }>
+                    {({ url, loading }) => (
+                      <a 
+                        href={url || '#'}
+                        download={`carbon-report-${playerName.toLowerCase().replace(/\s+/g, '-')}.pdf`}
+                        className={`group relative inline-flex items-center justify-center w-full px-6 py-3 sm:py-4 rounded-xl
+                                bg-emerald-600 text-white text-sm sm:text-base font-medium 
+                                shadow-md hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 
+                                focus:ring-offset-2 mb-6
+                                transition-all duration-200 transform hover:bg-emerald-700 ${loading ? 'opacity-75 cursor-wait' : ''}`}
+                        aria-disabled={loading}
+                        tabIndex={loading ? -1 : 0}
+                      >
+                        <div className="relative z-10 flex items-center justify-center">
+                          {loading ? (
+                            <span className="flex items-center">
+                              <span className="animate-spin mr-3 h-5 w-5 border-2 border-white border-t-transparent rounded-full"/>
+                              Generating PDF...
+                            </span>
+                          ) : (
+                            <>
+                              <Download className="w-5 h-5 mr-3 group-hover:translate-y-[2px] transition-transform" />
+                              Download Your Carbon Report
+                            </>
+                          )}
+                        </div>
+                      </a>
+                    )}
+                  </BlobProvider>
+
+                  {/* Play Again Button - improved styling for consistency */}
+                  <button
+                    onClick={onRestart}
+                    className="group relative inline-flex items-center justify-center w-full px-6 py-3 sm:py-4 rounded-xl
+                             bg-gray-800 text-white text-sm sm:text-base font-medium 
+                             shadow-md hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-gray-700 
+                             focus:ring-offset-2 mb-6
+                             transition-all duration-200 transform hover:bg-gray-900"
+                  >
+                    <div className="relative z-10 flex items-center justify-center">
+                      <Trophy className="w-5 h-5 mr-3 group-hover:rotate-12 transition-transform" />
+                      Play Again
+                    </div>
+                  </button>
+
+                  {/* Enhanced Chart Section - improved for mobile and accessibility */}
+                  <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-md p-3 sm:p-6 mb-8 hover:shadow-lg transition-shadow duration-300">
+                    <h2 className="text-lg font-semibold text-gray-800 mb-4">
+                      Annual Carbon Impact
+                    </h2>
+                    <div className="h-[280px] sm:h-[350px] w-full bg-white/70 rounded-lg p-2 sm:p-4">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
+                          data={impactData}
+                          margin={{
+                            top: 20,
+                            right: isMobile ? 20 : 40,
+                            left: isMobile ? 0 : 10,
+                            bottom: 20,
+                          }}
+                          barGap={isMobile ? 4 : 8}
+                          barSize={isMobile ? 30 : 60}
+                        >
+                          <CartesianGrid
+                            strokeDasharray="3 3"
+                            stroke="#e5e7eb"
+                            vertical={false}
+                          />
+                          <XAxis
+                            dataKey="year"
+                            stroke="#4b5563"
+                            fontSize={isMobile ? 10 : 12}
+                            tickMargin={8}
+                            axisLine={{ stroke: '#e5e7eb' }}
+                          />
+                          <YAxis
+                            stroke="#4b5563"
+                            fontSize={isMobile ? 10 : 12}
+                            tickMargin={8}
+                            axisLine={{ stroke: '#e5e7eb' }}
+                            tickFormatter={(value) => `${(value / 1000).toFixed(0)}K`}
+                            width={isMobile ? 35 : 45}
+                          />
+                          <Tooltip
+                            content={<CustomTooltip />}
+                            wrapperStyle={{ outline: 'none' }}
+                            cursor={{ fill: 'rgba(229, 231, 235, 0.2)' }}
+                          />
+                          <Legend
+                            verticalAlign="bottom"
+                            height={36}
+                            iconType="circle"
+                            iconSize={isMobile ? 6 : 8}
+                            wrapperStyle={{
+                              fontSize: isMobile ? '10px' : '12px',
+                              paddingTop: '8px'
+                            }}
+                          />
+                          <ReferenceLine
+                            y={idealCarbonPerYear}
+                            stroke="#10b981"
+                            strokeDasharray="3 3"
+                            label={{
+                              value: 'Ideal Target',
+                              position: 'right',
+                              fill: '#10b981',
+                              fontSize: isMobile ? 10 : 12,
+                              fontWeight: 600
+                            }}
+                          />
+                          <ReferenceLine
+                            y={averageCarbonPerYear}
+                            stroke="#f59e0b"
+                            strokeDasharray="3 3"
+                            label={{
+                              value: 'Average Zone',
+                              position: 'right',
+                              fill: '#f59e0b',
+                              fontSize: isMobile ? 10 : 12,
+                              fontWeight: 600
+                            }}
+                          />
+                          <Bar
+                            dataKey="Your Impact"
+                            fill="#ef4444"
+                            radius={[6, 6, 0, 0]}
+                          />
+                          <Bar
+                            dataKey="Average Impact"
+                            fill="#f59e0b"
+                            radius={[6, 6, 0, 0]}
+                          />
+                          <Bar
+                            dataKey="Ideal Target"
+                            fill="#10b981"
+                            radius={[6, 6, 0, 0]}
+                          />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                    
+                    <div className="mt-4 space-y-2 bg-white/70 p-3 rounded-lg border border-gray-100">
+                      <div className="grid grid-cols-3 gap-2 sm:gap-4">
+                        <div className="flex items-center gap-2 group">
+                          <span className="w-3 h-3 rounded-full bg-red-500 group-hover:scale-110 transition-transform"/>
+                          <span className="text-xs sm:text-sm text-gray-700 group-hover:text-red-600 transition-colors">Your Impact</span>
+                        </div>
+                        <div className="flex items-center gap-2 group">
+                          <span className="w-3 h-3 rounded-full bg-amber-500 group-hover:scale-110 transition-transform"/>
+                          <span className="text-xs sm:text-sm text-gray-700 group-hover:text-amber-600 transition-colors">Average</span>
+                        </div>
+                        <div className="flex items-center gap-2 group">
+                          <span className="w-3 h-3 rounded-full bg-emerald-500 group-hover:scale-110 transition-transform"/>
+                          <span className="text-xs sm:text-sm text-gray-700 group-hover:text-emerald-600 transition-colors">Target</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {activeTab === 'breakdown' && (
+                <section className="space-y-4 mb-8" aria-label="Detailed breakdown">
+                  <h2 className="text-xl font-semibold text-gray-800 mb-6 bg-gradient-to-r from-emerald-600 to-emerald-400 bg-clip-text text-transparent">
+                    Your Choices Breakdown
+                  </h2>
+                  <div className="grid gap-4 sm:gap-6">
+                    {questions.map((question, questionIndex) => {
+                      const questionAnswers = groupedAnswers[question.id] || [];
+                      if (questionAnswers.length === 0) return null;
+
+                      return (
+                        <div 
+                          key={question.id}
+                          className="bg-white/90 backdrop-blur-sm rounded-xl p-4 sm:p-6 shadow-md hover:shadow-lg transition-all duration-300"
+                        >
+                          <div className="flex items-start gap-3 sm:gap-4">
+                            <div className="flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 bg-emerald-100 rounded-full flex items-center justify-center">
+                              <span className="text-emerald-600 font-semibold text-sm sm:text-base">{questionIndex + 1}</span>
+                            </div>
+                            <div className="flex-grow">
+                              <h3 className="text-base sm:text-lg font-medium text-gray-800 mb-3">
+                                {question.text}
+                              </h3>
+                              <div className="space-y-3">
+                                {questionAnswers.map((option, optionIndex) => (
+                                  <div 
+                                    key={option.id}
+                                    className="bg-white/80 p-3 sm:p-4 rounded-lg border border-gray-100 hover:border-emerald-200 transition-colors"
+                                  >
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between sm:mb-2">
+                                      <span className="font-medium text-gray-700 mb-1 sm:mb-0">{option.text}</span>
+                                      <span className="text-xs sm:text-sm font-semibold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">
+                                        {option.carbonFootprint.toLocaleString()} kg CO₂
+                                      </span>
+                                    </div>
+                                    {option.improvement && (
+                                      <p className="text-xs sm:text-sm text-gray-600 mt-2 border-l-2 border-emerald-400 pl-3 py-1">
+                                        <span className="font-medium text-emerald-600">Eco Tip: </span>
+                                        {option.improvement}
+                                      </p>
+                                    )}
                                   </div>
-                                  {option.improvement && (
-                                    <p className="text-sm text-gray-600 mt-2 border-l-2 border-green-500 pl-3">
-                                      {option.improvement}
-                                    </p>
-                                  )}
-                                </div>
-                              ))}
+                                ))}
+                              </div>
                             </div>
                           </div>
                         </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Action buttons shown at the bottom of the breakdown tab */}
+                  <div className="mt-8 space-y-4">
+                    <BlobProvider document={
+                      <CarbonReport
+                        name={playerName}
+                        email={playerEmail}
+                        totalCarbon={totalCarbon}
+                        totalTrees={totalTrees}
+                        answers={enrichedAnswers}
+                      />
+                    }>
+                      {({ url, loading }) => (
+                        <a 
+                          href={url || '#'}
+                          download={`carbon-report-${playerName.toLowerCase().replace(/\s+/g, '-')}.pdf`}
+                          className={`group relative inline-flex items-center justify-center w-full px-6 py-3 sm:py-4 rounded-xl
+                                  bg-emerald-600 text-white text-sm sm:text-base font-medium 
+                                  shadow-md hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 
+                                  focus:ring-offset-2 mb-4
+                                  transition-all duration-200 transform hover:bg-emerald-700 ${loading ? 'opacity-75 cursor-wait' : ''}`}
+                          aria-disabled={loading}
+                          tabIndex={loading ? -1 : 0}
+                        >
+                          <div className="relative z-10 flex items-center justify-center">
+                            {loading ? (
+                              <span className="flex items-center">
+                                <span className="animate-spin mr-3 h-5 w-5 border-2 border-white border-t-transparent rounded-full"/>
+                                Generating PDF...
+                              </span>
+                            ) : (
+                              <>
+                                <Download className="w-5 h-5 mr-3 group-hover:translate-y-[2px] transition-transform" />
+                                Download Full Report
+                              </>
+                            )}
+                          </div>
+                        </a>
+                      )}
+                    </BlobProvider>
+
+                    <button
+                      onClick={onRestart}
+                      className="group relative inline-flex items-center justify-center w-full px-6 py-3 sm:py-4 rounded-xl
+                              bg-gray-800 text-white text-sm sm:text-base font-medium 
+                              shadow-md hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-gray-700 
+                              focus:ring-offset-2
+                              transition-all duration-200 transform hover:bg-gray-900"
+                    >
+                      <div className="relative z-10 flex items-center justify-center">
+                        <Trophy className="w-5 h-5 mr-3 group-hover:rotate-12 transition-transform" />
+                        Play Again
                       </div>
-                    );
-                  })}
-                </div>
-              </section>
+                    </button>
+                  </div>
+                </section>
+              )}
             </section>
 
             {/* Action Buttons */}
@@ -579,51 +698,44 @@ export const ResultsPage: React.FC<ResultsPageProps> = ({
               <a
                 href="https://footprinto.vercel.app/"
                 target="_blank"
+                rel="noopener noreferrer"
                 className="w-full inline-flex items-center justify-center px-4 md:px-6 py-3 md:py-4 rounded-xl
-                         bg-teal-500 text-white text-sm md:text-base font-semibold shadow-lg
-                         hover:bg-teal-600 focus:outline-none focus:ring-2 
-                         focus:ring-teal-500 focus:ring-offset-2
-                         transition-all duration-200 transform hover:scale-[1.02] text-center"
+                        bg-cyan-600 text-white text-sm md:text-base font-medium shadow-md
+                        hover:bg-cyan-700 focus:outline-none focus:ring-2 
+                        focus:ring-cyan-500 focus:ring-offset-2
+                        transition-all duration-200 transform hover:scale-[1.02] text-center"
+                aria-label="Calculate carbon footprint of any object"
               >
                 <Camera className="w-4 h-4 md:w-5 md:h-5 mr-2" aria-hidden="true" />
-                Know any objects carbon footprint
+                Know any object's carbon footprint
               </a>
-
-              <button
-                onClick={handleRestart}
-                className="w-full inline-flex items-center justify-center px-4 md:px-6 py-3 md:py-4 rounded-xl
-                         bg-yellow-500 text-white text-sm md:text-base font-semibold shadow-lg
-                         hover:bg-yellow-600 focus:outline-none focus:ring-2 
-                         focus:ring-yellow-500 focus:ring-offset-2
-                         transition-all duration-200 transform hover:scale-[1.02]"
-                aria-label="Restart the game"
-              >
-                <Trophy className="w-4 h-4 md:w-5 md:h-5 mr-2" aria-hidden="true" />
-                Restart Game
-              </button>
             </div>
           </div>
         </div>
       </main>
 
-      {/* Fixed Bottom Bar with Enhanced Design */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-lg border-t border-gray-100 shadow-xl">
-        <div className="max-w-4xl mx-auto">
-          <button
-            onClick={onViewLeaderboard}
-            className="group relative w-full inline-flex items-center justify-center px-8 py-4 rounded-xl
-                     bg-yellow-500 text-white text-base font-semibold 
-                     shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-yellow-500 
-                     focus:ring-offset-2 transform hover:-translate-y-1 transition-all duration-200
-                     hover:bg-yellow-600"
-          >
-            <div className="relative z-10 flex items-center">
-              <Trophy className="w-5 h-5 mr-3 group-hover:rotate-12 transition-transform" />
-              View Global Leaderboard
-            </div>
-          </button>
-        </div>
+      {/* Fixed bottom action button for mobile - Making sure leaderboard is always accessible */}
+      <div className="fixed bottom-4 right-4 sm:hidden z-40">
+        <button
+          onClick={onViewLeaderboard}
+          aria-label="View global leaderboard"
+          className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white p-3 rounded-full shadow-lg hover:shadow-xl transform transition-all duration-300 hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+        >
+          <Trophy className="h-6 w-6" />
+        </button>
       </div>
+
+      {/* Feedback message for email sent */}
+      {isEmailSent && (
+        <div className="fixed bottom-4 left-0 right-0 mx-auto w-max z-50">
+          <div className="bg-emerald-100 border-l-4 border-emerald-500 text-emerald-700 p-4 rounded-lg shadow-lg flex items-center gap-2 animate-fadeIn">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-emerald-500" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+            </svg>
+            <span className="text-sm font-medium">Your carbon report has been emailed to you!</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

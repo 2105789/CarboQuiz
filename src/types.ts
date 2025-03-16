@@ -15,6 +15,7 @@ export interface Question {
   text: string;
   options: Option[];
   requiresDistance: boolean;  // Required property for distance input
+  explanation?: string;  // Optional explanation for the question
 }
 
 export interface Answer {

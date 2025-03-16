@@ -11,11 +11,12 @@ interface GameState {
   answers: Answer[];
   currentAnswers: Option[] | null;
   playerName: string;
+  playerEmail: string;
   playerEntry?: LeaderboardEntry;
 }
 
 interface GameActions {
-  handleStart: (name: string) => void;
+  handleStart: (name: string, email: string) => void;
   handleAnswer: (options: Option[]) => void;
   handleNextQuestion: () => void;
   handleViewLeaderboard: () => void;
@@ -32,12 +33,14 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     answers: [],
     currentAnswers: null,
     playerName: '',
+    playerEmail: '',
   });
 
-  const handleStart = useCallback((name: string) => {
+  const handleStart = useCallback((name: string, email: string) => {
     setState(prev => ({
       ...prev,
       playerName: name,
+      playerEmail: email,
       gameState: 'question'
     }));
   }, []);
@@ -134,6 +137,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       answers: [],
       currentAnswers: null,
       playerName: '',
+      playerEmail: '',
     });
   }, []);
 
