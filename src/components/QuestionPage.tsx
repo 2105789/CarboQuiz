@@ -74,6 +74,7 @@ export const QuestionPage: React.FC<QuestionPageProps> = ({
 
     setIsTransitioning(true);
     setTimeout(() => {
+      window.scrollTo(0, 0); // Reset scroll position before navigating
       onAnswer(selectedOptions);
     }, 1000);
   }, [onAnswer, selectedOptions, question.text]);
@@ -90,6 +91,7 @@ export const QuestionPage: React.FC<QuestionPageProps> = ({
     }));
 
     setTimeout(() => {
+      window.scrollTo(0, 0); // Reset scroll position before navigating
       onAnswer(adjustedOptions, distance);
     }, 1000);
   }, [onAnswer, selectedOptions]);
@@ -103,6 +105,8 @@ export const QuestionPage: React.FC<QuestionPageProps> = ({
   useEffect(() => {
     setIsTransitioning(false);
     setShowContinueButton(false);
+    window.scrollTo(0, 0); // Reset scroll position when a new question is loaded
+    
     const preloadImages = () => {
       const imagePromises = question.options.map((option) => {
         return new Promise<void>((resolve) => {
@@ -287,9 +291,9 @@ export const QuestionPage: React.FC<QuestionPageProps> = ({
                 <button
                   onClick={handleNext}
                   disabled={!showContinueButton || isTransitioning}
-                  className={`px-5 py-3 sm:py-4 text-sm md:text-base font-medium text-white
+                  className={`px-4 py-3 text-sm md:text-base font-medium text-white
                            rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2
-                           transition-all duration-200 w-full
+                           transition-all duration-200 w-full h-12
                            ${showContinueButton 
                               ? 'bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 focus:ring-emerald-500' 
                               : 'bg-gray-300 cursor-not-allowed'}`}

@@ -1,5 +1,5 @@
 // ImpactPage.tsx
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { Option } from '../types';
 import { ImpactAnimation } from './ImpactAnimation';
 import { getRandomGifForRank } from '../data/gifs';
@@ -45,9 +45,14 @@ export const ImpactPage: React.FC<ImpactPageProps> = ({ options = [], onNext }) 
   const [isGifLoaded, setIsGifLoaded] = React.useState(false);
 
   const handleNext = () => {
-    window.scrollTo(0, 0);
+    window.scrollTo(0, 0); // Reset scroll position
     onNext();
   };
+
+  // Reset scroll position when component mounts
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   if (!options.length) {
     return null; // Let the parent component handle loading states
@@ -174,17 +179,16 @@ export const ImpactPage: React.FC<ImpactPageProps> = ({ options = [], onNext }) 
         </div>
       </div>
 
-      {/* Fixed Bottom Button - modernized */}
+      {/* Fixed Bottom Button - modernized and matched with QuestionPage */}
       <div className="fixed bottom-0 left-0 right-0 z-20">
         <div className="bg-white/90 backdrop-blur-md border-t border-gray-100 shadow-lg p-4">
           <div className="max-w-4xl mx-auto">
             <button
               onClick={handleNext}
-              className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-8 py-4 rounded-xl
-                     font-semibold hover:from-emerald-600 hover:to-teal-700 transition-all duration-200
-                     transform hover:-translate-y-1 active:translate-y-0 active:scale-[0.98]
-                     flex items-center justify-center gap-3
-                     shadow-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+              className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-4 py-3 h-12 rounded-xl 
+                     font-medium hover:from-emerald-600 hover:to-teal-700 transition-all duration-200
+                     focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2
+                     flex items-center justify-center gap-3"
             >
               <span>Continue</span>
               <svg
